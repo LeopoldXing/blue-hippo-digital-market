@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    container_name: postgres-bluehippo-dev
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: 1234567890
+      POSTGRES_USER: postgres
+      POSTGRES_DB: bluehippo
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - bluehippo-dev-network
+
+  mongodb:
+    image: mongodb/mongodb-community-server:7.0.5-ubi8
+    container_name: mongodb-bluehippo-dev
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=lupin
+      - MONGO_INITDB_ROOT_PASSWORD=1234
+    ports:
+      - "27017:27017"
+    networks:
+      - bluehippo-dev-network
