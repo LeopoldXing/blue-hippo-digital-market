@@ -3,6 +3,8 @@ class Cart < ApplicationRecord
   belongs_to :product
 
   # Validations
-  validates :user_id, presence: true # User ID presence validation
-  validates :product_id, presence: true # Product ID presence validation
+  validates :product_id, presence: true
+  validates :user_id, presence: true
+  validates :created_by, presence: true
+  validates :updated_by, presence: true
 end

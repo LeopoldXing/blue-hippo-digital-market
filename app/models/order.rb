@@ -4,6 +4,13 @@ class Order < ApplicationRecord
   has_many :products, through: :link_orders_products
 
   # Validations
-  validates :tax_type, presence: true # Tax type presence validation
-  validates :is_paid, inclusion: { in: [true, false] } # is_paid must be true or false
+  validates :payload_id, presence: true, uniqueness: true
+  validates :user_id, presence: true
+  validates :is_paid, inclusion: { in: [true, false] }
+  validates :tax_type, presence: true
+  validates :gst, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :pst, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :hst, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :created_by, presence: true
+  validates :updated_by, presence: true
 end

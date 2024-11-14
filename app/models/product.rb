@@ -5,6 +5,13 @@ class Product < ApplicationRecord
   has_many :orders, through: :link_orders_products
 
   # Validations
-  validates :name, presence: true, length: { maximum: 50 } # Name presence and length validation
-  validates :price, numericality: { greater_than_or_equal_to: 0 } # Price should be non-negative
+  validates :user_id, presence: true
+  validates :payload_id, presence: true, uniqueness: true
+  validates :name, presence: true, length: { maximum: 50 }
+  validates :description, length: { maximum: 500 }, allow_blank: true
+  validates :price, presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :product_file_url, presence: true
+  validates :approved_for_sale, presence: true, inclusion: { in: ['pending', 'approved', 'rejected'] }
+  validates :created_by, presence: true
+  validates :updated_by, presence: true
 end
