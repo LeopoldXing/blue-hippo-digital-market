@@ -23,3 +23,8 @@ services:
       - "27017:27017"
     networks:
       - bluehippo-dev-network
+
+networks:
+  bluehippo-dev-network:
+    name: bluehippo-dev-network
+    driver: bridge
