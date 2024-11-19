@@ -13,4 +13,5 @@ Rails.application.routes.draw do
 
   # product
   get '/api/product/search', to: 'products#search'
+  get '/api/product/:id', to: 'products#show'
 end

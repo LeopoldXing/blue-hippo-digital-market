@@ -64,4 +64,18 @@ class Product < ApplicationRecord
     products.page(page).per(per_page)
   end
 
+  def as_json(options = {})
+    {
+      id: id,
+      payloadId: payload_id,
+      name: name,
+      description: description,
+      price: price,
+      priceId: price_id,
+      stripeId: stripe_id,
+      category: category,
+      productFileUrl: product_file_url,
+      productImages: product_images.map(&:as_json)
+    }
+  end
 end

@@ -13,4 +13,17 @@ class ProductImage < ApplicationRecord
   validates :file_type, length: { maximum: 50 }, allow_blank: true
   validates :created_by, presence: true
   validates :updated_by, presence: true
+
+  def as_json(options = {})
+    {
+      payloadId: payload_id,
+      url: url,
+      filename: filename,
+      filesize: filesize,
+      width: width,
+      height: height,
+      mimeType: mime_type,
+      fileType: file_type
+    }
+  end
 end

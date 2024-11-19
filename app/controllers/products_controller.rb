@@ -1,6 +1,5 @@
 class ProductsController < ApplicationController
   def search
-    # 提取参数
     keyword = params[:keyword].presence
     category = params[:category].presence
     top_price = params[:topPrice].to_f
@@ -10,7 +9,6 @@ class ProductsController < ApplicationController
     current_page = params[:current].to_i > 0 ? params[:current].to_i : 1
     page_size = params[:size].to_i > 0 ? params[:size].to_i : 10
 
-    # 调用模型方法获取结果
     @products = Product.search_products(
       keyword: keyword,
       category: category,
@@ -22,7 +20,6 @@ class ProductsController < ApplicationController
       page_size: page_size
     )
 
-    # 返回结果
     render json: {
       results: @products.as_json(include: { product_images: { only: [:url, :file_type] } }),
       result_count: @products.total_count,
@@ -31,4 +28,38 @@ class ProductsController < ApplicationController
       total_page: @products.total_pages
     }
   end
+
+  # app/controllers/products_controller.rb
+  def show
+    product = Product.includes(:product_images).find_by(id: params[:id])
+
+    if product
+      render json: {
+        id: product.id,
+        payloadId: product.payload_id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        priceId: product.price_id,
+        stripeId: product.stripe_id,
+        category: product.category,
+        productFileUrl: product.product_file_url,
+        productImages: product.product_images.map do |image|
+          {
+            payloadId: image.payload_id || nil,
+            url: image.url,
+            filename: image.filename || nil,
+            filesize: image.filesize || nil,
+            width: image.width || nil,
+            height: image.height || nil,
+            mimeType: image.mime_type || nil,
+            fileType: image.file_type || nil
+          }
+        end
+      }, status: :ok
+    else
+      render json: { success: false, error: 'Product not found' }, status: :not_found
+    end
+  end
+
 end
