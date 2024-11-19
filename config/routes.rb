@@ -7,4 +7,10 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  # user auth
+  post '/sign-up', to: 'users#sign_up'
+
+  # product
+  get '/api/product/search', to: 'products#search'
 end

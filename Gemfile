@@ -1,5 +1,12 @@
 source "https://rubygems.org"
 
+# encrypt
+gem 'bcrypt', '~> 3.1.7'
+# pagination
+gem 'kaminari'
+# cors
+gem 'rack-cors'
+
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 7.2.1", ">= 7.2.1.2"
 # Use postgresql as the database for Active Record

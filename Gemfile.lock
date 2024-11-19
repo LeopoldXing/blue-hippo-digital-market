@@ -74,6 +74,7 @@ GEM
       tzinfo (~> 2.0, >= 2.0.5)
     ast (2.4.2)
     base64 (0.2.0)
+    bcrypt (3.1.20)
     benchmark (0.4.0)
     bigdecimal (3.1.8)
     bootsnap (1.18.4)
@@ -99,6 +100,18 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     json (2.8.2)
+    kaminari (1.2.2)
+      activesupport (>= 4.1.0)
+      kaminari-actionview (= 1.2.2)
+      kaminari-activerecord (= 1.2.2)
+      kaminari-core (= 1.2.2)
+    kaminari-actionview (1.2.2)
+      actionview
+      kaminari-core (= 1.2.2)
+    kaminari-activerecord (1.2.2)
+      activerecord
+      kaminari-core (= 1.2.2)
+    kaminari-core (1.2.2)
     language_server-protocol (3.17.0.3)
     logger (1.6.1)
     loofah (2.23.1)
@@ -141,6 +154,8 @@ GEM
       nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.1.8)
+    rack-cors (2.0.2)
+      rack (>= 2.0.0)
     rack-session (2.0.0)
       rack (>= 3.0.0)
     rack-test (2.1.0)
@@ -233,11 +248,14 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  bcrypt (~> 3.1.7)
   bootsnap
   brakeman
   debug
+  kaminari
   pg (~> 1.1)
   puma (>= 5.0)
+  rack-cors
   rails (~> 7.2.1, >= 7.2.1.2)
   rubocop-rails-omakase
   tzinfo-data
