@@ -63,4 +63,41 @@ class UsersController < ApplicationController
       }, status: :unprocessable_entity
     end
   end
+
+  # POST /api/user/sign-in
+  def sign_in
+    email = params[:email]
+    password = params[:password]
+    product_id_list = params[:productIdList] || []
+
+    user = User.find_by(email: email)
+
+    if user && verify_password(user, password)
+      session[:user_id] = user.id
+
+      # merge_cart_items(user, product_id_list)
+
+      render json: { message: "Sign in successful" }, status: :ok
+    else
+      render json: {
+        apiPath: request.path,
+        errorCode: 401,
+        errorMessage: "Authentication failed",
+        errorTime: Time.current.iso8601
+      }, status: :unauthorized
+    end
+  end
+
+  # POST /api/user/sign-out
+  def sign_out
+    if session[:user_id]
+      reset_session
+      render json: { message: "Sign out successful" }, status: :ok
+    end
+  end
+
+  def verify_password(user, password)
+    hashed_password = Digest::SHA256.hexdigest(password + user.salt)
+    hashed_password == user.password_hash
+  end
 end
