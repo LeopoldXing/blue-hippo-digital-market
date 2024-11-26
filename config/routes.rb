@@ -9,8 +9,8 @@ Rails.application.routes.draw do
   # root "posts#index"
 
   # user auth
-  post '/sign-up', to: 'users#sign_up'
+  post "/api/user/sign-up", to: "users#sign_up"
 
   # product
-  get '/api/product/search', to: 'products#search'
+  get "/api/product/search", to: "products#search"
 end

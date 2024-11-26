@@ -1,4 +1,18 @@
 services:
+  redis:
+    image: redis:7.0.14
+    container_name: redis-bluehippo-dev
+    environment:
+      - REDIS_PASSWORD=1234
+    command: [ "redis-server", "--requirepass", "1234" ]
+    restart: always
+#    volumes:
+#      - ./data/redis:/data
+    ports:
+      - "56784:6379"
+    networks:
+      - bluehippo-dev-network
+
   postgres:
     image: postgres:16.4-alpine
     container_name: postgres-bluehippo-dev
