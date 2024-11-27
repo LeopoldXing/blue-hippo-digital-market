@@ -1,6 +1,25 @@
 require "redis"
 
 class UsersController < ApplicationController
+  include Authentication
+  before_action :authenticate_user, only: [:get_current_user, :sign_out]
+
+  # GET /api/user
+  def get_current_user
+    if @current_user
+      render json: {
+        id: @current_user.id,
+        email: @current_user.email,
+        username: @current_user.username,
+        role: @current_user.role,
+        createdAt: @current_user.created_at,
+        updatedAt: @current_user.updated_at
+      }, status: :ok
+    else
+      render json: { error: "User not authenticated" }, status: :unauthorized
+    end
+  end
+
   # POST /api/user/sign-up
   def sign_up
     user_params = params.permit(
@@ -98,17 +117,13 @@ class UsersController < ApplicationController
 
   # POST /api/user/sign-out
   def sign_out
-    if session[:user_id]
-      user_id = session[:user_id]
-      redis = ::Redis.new(host: "localhost", port: 56784, db: 0)
-      access_token = redis.get("user:id:#{user_id}")
-      redis.del("user:id:#{user_id}")
-      redis.del("user:access_token:#{access_token}")
+    user_id = @current_user.id
+    redis = ::Redis.new(host: "localhost", port: 56784, db: 0)
+    access_token = redis.get("user:id:#{user_id}")
+    redis.del("user:id:#{user_id}")
+    redis.del("user:access_token:#{access_token}")
 
-      render json: { message: "Sign out successful" }, status: :ok
-    else
-      render json: { error: "User not signed in" }, status: :unauthorized
-    end
+    render json: { message: "Sign out successful" }, status: :ok
   end
 
   private

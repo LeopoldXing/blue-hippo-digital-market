@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   post "/api/user/sign-up", to: "users#sign_up"
   post "/api/user/sign-in", to: "users#sign_in"
   post "/api/user/sign-out", to: "users#sign_out"
+  get "/api/user", to: "users#get_current_user"
 
   # product
   get "/api/product/search", to: "products#search"
