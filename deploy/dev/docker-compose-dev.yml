@@ -2,9 +2,9 @@ services:
   redis:
     image: redis:7.0.14
     container_name: redis-bluehippo-dev
-    environment:
-      - REDIS_PASSWORD=1234
-    command: [ "redis-server", "--requirepass", "1234" ]
+#    environment:
+#      - REDIS_PASSWORD=1234
+#    command: [ "redis-server", "--requirepass", "1234" ]
     restart: always
 #    volumes:
 #      - ./data/redis:/data

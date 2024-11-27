@@ -28,9 +28,5 @@ module BlueHippoDigitalMarket
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
-
-    puts "Session options: #{config.session_options.inspect}"
-    config.middleware.use ActionDispatch::Cookies
-    config.middleware.use ActionDispatch::Session::RedisStore, config.session_options
   end
 end

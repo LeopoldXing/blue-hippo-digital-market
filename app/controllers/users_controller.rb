@@ -1,4 +1,5 @@
-# app/controllers/users_controller.rb
+require "redis"
+
 class UsersController < ApplicationController
   # POST /api/user/sign-up
   def sign_up
@@ -73,11 +74,18 @@ class UsersController < ApplicationController
     user = User.find_by(email: email)
 
     if user && verify_password(user, password)
-      session[:user_id] = user.id
+      # save session into redis
+      access_token = SecureRandom.hex(32)
+      redis = ::Redis.new(host: "localhost", port: 56784, db: 0)
+      redis.set("user:access_token:#{access_token}", user.id)
+      redis.set("user:id:#{user.id}", access_token)
 
       # merge_cart_items(user, product_id_list)
 
-      render json: { message: "Sign in successful" }, status: :ok
+      render json: {
+        accessToken: access_token,
+        productList: product_id_list
+      }, status: :ok
     else
       render json: {
         apiPath: request.path,
@@ -91,10 +99,19 @@ class UsersController < ApplicationController
   # POST /api/user/sign-out
   def sign_out
     if session[:user_id]
-      reset_session
+      user_id = session[:user_id]
+      redis = ::Redis.new(host: "localhost", port: 56784, db: 0)
+      access_token = redis.get("user:id:#{user_id}")
+      redis.del("user:id:#{user_id}")
+      redis.del("user:access_token:#{access_token}")
+
       render json: { message: "Sign out successful" }, status: :ok
+    else
+      render json: { error: "User not signed in" }, status: :unauthorized
     end
   end
+
+  private
 
   def verify_password(user, password)
     hashed_password = Digest::SHA256.hexdigest(password + user.salt)

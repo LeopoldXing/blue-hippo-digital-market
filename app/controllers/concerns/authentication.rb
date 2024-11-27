@@ -8,16 +8,16 @@ module Authentication
   private
 
   def authenticate_user
-    access_token = request.headers['Authorization']&.split(' ')&.last
+    access_token = request.headers["Authorization"]&.split(" ")&.last
     if access_token
       user_id = get_user_id_from_token(access_token)
       if user_id
         @current_user = User.find_by(id: user_id)
       else
-        render json: { errorMessage: 'Invalid token' }, status: :unauthorized
+        render json: { errorMessage: "Invalid token" }, status: :unauthorized
       end
     else
-      render json: { errorMessage: 'Not authenticated' }, status: :unauthorized
+      render json: { errorMessage: "Not authenticated" }, status: :unauthorized
     end
   end
 
