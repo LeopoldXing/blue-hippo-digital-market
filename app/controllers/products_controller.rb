@@ -93,7 +93,7 @@ class ProductsController < ApplicationController
         :payloadId,
         :url,
         :filename,
-        :filesize, # 确保这里是 :filesize，而不是 :fileSize
+        :filesize,
         :width,
         :height,
         :mimeType,
@@ -156,7 +156,8 @@ class ProductsController < ApplicationController
 
   # PUT /api/product
   def update_product
-    product_params = params.permit(
+    # Require the :product parameter and permit its keys
+    product_params = params.require(:product).permit(
       :payloadId,
       :name,
       :description,
@@ -167,7 +168,6 @@ class ProductsController < ApplicationController
       :approvedForSale,
       :productFileUrl,
       productImages: [
-        :id,
         :payloadId,
         :url,
         :filename,
@@ -175,42 +175,56 @@ class ProductsController < ApplicationController
         :width,
         :height,
         :mimeType,
-        :fileType,
-        :_destroy
-      ],
-      product: {}
+        :fileType
+      ]
     )
 
-    product_params.delete(:product)
+    # Convert parameter keys from camelCase to snake_case
+    product_params_snake_case = product_params.to_h.deep_transform_keys { |key| key.to_s.underscore }
 
-    product_params_snake_case = product_params.deep_transform_keys { |key| key.to_s.underscore }
-
+    # Rename 'product_images' key to 'product_images_attributes' for nested attributes
     if product_params_snake_case['product_images']
       product_params_snake_case['product_images_attributes'] = product_params_snake_case.delete('product_images')
     end
 
+    # Find the existing product
     product = Product.find_by(payload_id: product_params_snake_case['payload_id'])
 
+    # Check if product exists
     if product.nil?
-      product = Product.new(product_params_snake_case)
-      product.user = @current_user
-
-      if product.save
-        render json: product.as_json(include: :product_images), status: :created
-      else
-        render json: { errorMessage: product.errors.full_messages.join(", ") }, status: :unprocessable_entity
-      end
+      render json: { errorMessage: "Product not found" }, status: :not_found
       return
     end
 
-    if @current_user.role == "ADMIN" || product.user_id == @current_user.id
+    # Begin transaction
+    Product.transaction do
+      # Delete all associated product images
+      product.product_images.destroy_all
+
+      # Remove 'id's from images attributes and set 'created_by' and 'updated_by'
+      if product_params_snake_case['product_images_attributes']
+        product_params_snake_case['product_images_attributes'].each do |image_params|
+          image_params.delete('id') # Remove 'id' to create new images
+          image_params['created_by'] = @current_user.id.to_s
+          image_params['updated_by'] = @current_user.id.to_s
+        end
+      end
+
+      # Set 'updated_by' for the product
+      product.updated_by = @current_user.id.to_s
+
+      # Update the product with new attributes
       if product.update(product_params_snake_case)
         render json: product.as_json(include: :product_images), status: :ok
       else
-        render json: { errorMessage: product.errors.full_messages.join(", ") }, status: :unprocessable_entity
+        Rails.logger.debug "Product update failed: #{product.errors.full_messages}"
+        product.product_images.each do |image|
+          if image.errors.any?
+            Rails.logger.debug "ProductImage errors: #{image.errors.full_messages}"
+          end
+        end
+        raise ActiveRecord::Rollback
       end
-    else
-      render json: { errorMessage: "Authentication failed" }, status: :unauthorized
     end
   end
 
