@@ -16,4 +16,9 @@ Rails.application.routes.draw do
 
   # product
   get "/api/product/search", to: "products#search"
+  get "/api/product/:id", to: "products#get_product", as: :get_product
+  post "/api/product", to: "products#create_product", as: :create_product
+  delete "/api/product/:payload_id", to: "products#delete_product", as: :delete_product
+  put "/api/product", to: "products#update_product", as: :update_product
+
 end

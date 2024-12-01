@@ -1,8 +1,9 @@
 class Product < ApplicationRecord
   belongs_to :user
-  has_many :product_images
   has_many :link_orders_products
   has_many :orders, through: :link_orders_products
+  has_many :product_images, dependent: :destroy
+  accepts_nested_attributes_for :product_images, allow_destroy: true
 
   # Validations
   validates :user_id, presence: true, numericality: { only_integer: true }
