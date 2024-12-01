@@ -214,37 +214,4 @@ class ProductsController < ApplicationController
     end
   end
 
-  # app/controllers/products_controller.rb
-  def show
-    product = Product.includes(:product_images).find_by(id: params[:id])
-
-    if product
-      render json: {
-        id: product.id,
-        payloadId: product.payload_id,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        priceId: product.price_id,
-        stripeId: product.stripe_id,
-        category: product.category,
-        productFileUrl: product.product_file_url,
-        productImages: product.product_images.map do |image|
-          {
-            payloadId: image.payload_id || nil,
-            url: image.url,
-            filename: image.filename || nil,
-            filesize: image.filesize || nil,
-            width: image.width || nil,
-            height: image.height || nil,
-            mimeType: image.mime_type || nil,
-            fileType: image.file_type || nil
-          }
-        end
-      }, status: :ok
-    else
-      render json: { success: false, error: 'Product not found' }, status: :not_found
-    end
-  end
-
 end
