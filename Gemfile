@@ -6,6 +6,8 @@ gem 'bcrypt', '~> 3.1.7'
 gem 'kaminari'
 # cors
 gem 'rack-cors'
+# redis
+gem "redis"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 7.2.1", ">= 7.2.1.2"

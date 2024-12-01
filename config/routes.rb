@@ -9,9 +9,15 @@ Rails.application.routes.draw do
   # root "posts#index"
 
   # user auth
-  post '/sign-up', to: 'users#sign_up'
+  post "/api/user/sign-up", to: "users#sign_up"
+  post "/api/user/sign-in", to: "users#sign_in"
+  post "/api/user/sign-out", to: "users#sign_out"
+  get "/api/user", to: "users#get_current_user"
 
   # product
-  get '/api/product/search', to: 'products#search'
+  get "/api/product/search", to: "products#search"
   get '/api/product/:id', to: 'products#show'
+  post "/api/product", to: "products#create_product", as: :create_product
+  delete "/api/product/:payload_id", to: "products#delete_product", as: :delete_product
+  put "/api/product", to: "products#update_product", as: :update_product
 end

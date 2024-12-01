@@ -1,8 +1,9 @@
 class Product < ApplicationRecord
   belongs_to :user
-  has_many :product_images
   has_many :link_orders_products
   has_many :orders, through: :link_orders_products
+  has_many :product_images, dependent: :destroy
+  accepts_nested_attributes_for :product_images, allow_destroy: true
 
   # Validations
   validates :user_id, presence: true, numericality: { only_integer: true }
@@ -13,10 +14,8 @@ class Product < ApplicationRecord
   validates :price_id, length: { maximum: 255 }, allow_blank: true
   validates :stripe_id, length: { maximum: 255 }, allow_blank: true
   validates :category, presence: true, length: { maximum: 50 }
-  validates :product_file_url, presence: true, format: { with: URI::regexp }
+  validates :product_file_url, presence: true
   validates :approved_for_sale, presence: true, inclusion: { in: %w[pending approved rejected] }
-  validates :created_by, presence: true
-  validates :updated_by, presence: true
 
   def self.search_products(params)
     products = Product.all
