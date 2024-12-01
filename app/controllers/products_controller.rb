@@ -2,7 +2,7 @@
 
 class ProductsController < ApplicationController
   include Authentication
-  before_action :authenticate_user, except: [:search, :get_product, :create_product, :update_product, :delete_product]
+  before_action :authenticate_user, except: [:search, :get_product]
 
   def search
     keyword = params[:keyword].presence
@@ -78,8 +78,8 @@ class ProductsController < ApplicationController
 
   # POST /api/product
   def create_product
-    # Permit parameters from the root level
-    product_params = params.permit(
+    # Require the :product parameter and permit its keys
+    product_params = params.require(:product).permit(
       :payloadId,
       :name,
       :description,
@@ -93,7 +93,7 @@ class ProductsController < ApplicationController
         :payloadId,
         :url,
         :filename,
-        :filesize,
+        :filesize, # 确保这里是 :filesize，而不是 :fileSize
         :width,
         :height,
         :mimeType,
@@ -102,34 +102,47 @@ class ProductsController < ApplicationController
     )
 
     # Convert parameter keys from camelCase to snake_case
-    product_params_snake_case = product_params.deep_transform_keys { |key| key.to_s.underscore }
+    product_params_snake_case = product_params.to_h.deep_transform_keys { |key| key.to_s.underscore }
 
     # Rename 'product_images' key to 'product_images_attributes' for nested attributes
     if product_params_snake_case['product_images']
       product_params_snake_case['product_images_attributes'] = product_params_snake_case.delete('product_images')
     end
 
+    # Set 'created_by' and 'updated_by' for each product_image
+    if product_params_snake_case['product_images_attributes']
+      product_params_snake_case['product_images_attributes'].each do |image_params|
+        image_params['created_by'] = @current_user.id.to_s
+        image_params['updated_by'] = @current_user.id.to_s
+      end
+    end
+
     # Create a new product instance and associate it with the current user
     product = Product.new(product_params_snake_case)
     product.user = @current_user
+    product.created_by = @current_user.id.to_s
+    product.updated_by = @current_user.id.to_s
 
     # Save the product to the database
     if product.save
       render json: product.as_json(include: :product_images), status: :created
     else
+      Rails.logger.debug "Product save failed: #{product.errors.full_messages}"
+      product.product_images.each do |image|
+        if image.errors.any?
+          Rails.logger.debug "ProductImage errors: #{image.errors.full_messages}"
+        end
+      end
       render json: { errorMessage: product.errors.full_messages.join(", ") }, status: :unprocessable_entity
     end
   end
 
   # DELETE /api/product/:payload_id
   def delete_product
-    # 获取 payload_id 参数
     payload_id = params[:payload_id]
 
-    # 1. 获取当前用户
     current_user = @current_user
 
-    # 2. 查找要删除的产品
     product = Product.find_by(payload_id: payload_id)
 
     if product.nil?
@@ -143,7 +156,6 @@ class ProductsController < ApplicationController
 
   # PUT /api/product
   def update_product
-    # 从根级参数获取，并允许所有需要的参数，包括 :product 参数
     product_params = params.permit(
       :payloadId,
       :name,
@@ -166,25 +178,20 @@ class ProductsController < ApplicationController
         :fileType,
         :_destroy
       ],
-      :product,
+      product: {}
     )
 
-    # 删除不必要的 :product 参数，避免干扰
     product_params.delete(:product)
 
-    # 将参数键从驼峰命名转换为下划线命名
     product_params_snake_case = product_params.deep_transform_keys { |key| key.to_s.underscore }
 
-    # 重命名 'product_images' 为 'product_images_attributes'，以支持嵌套属性
     if product_params_snake_case['product_images']
       product_params_snake_case['product_images_attributes'] = product_params_snake_case.delete('product_images')
     end
 
-    # 查找原始产品
     product = Product.find_by(payload_id: product_params_snake_case['payload_id'])
 
     if product.nil?
-      # 如果产品不存在，创建新产品
       product = Product.new(product_params_snake_case)
       product.user = @current_user
 
@@ -196,9 +203,7 @@ class ProductsController < ApplicationController
       return
     end
 
-    # 检查用户权限
     if @current_user.role == "ADMIN" || product.user_id == @current_user.id
-      # 更新产品
       if product.update(product_params_snake_case)
         render json: product.as_json(include: :product_images), status: :ok
       else

@@ -14,10 +14,8 @@ class Product < ApplicationRecord
   validates :price_id, length: { maximum: 255 }, allow_blank: true
   validates :stripe_id, length: { maximum: 255 }, allow_blank: true
   validates :category, presence: true, length: { maximum: 50 }
-  validates :product_file_url, presence: true, format: { with: URI::regexp }
+  validates :product_file_url, presence: true
   validates :approved_for_sale, presence: true, inclusion: { in: %w[pending approved rejected] }
-  validates :created_by, presence: true
-  validates :updated_by, presence: true
 
   def self.search_products(params)
     products = Product.all
