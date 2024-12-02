@@ -20,7 +20,6 @@ class CartController < ApplicationController
       return
     end
 
-    # 检查商品是否已在购物车中
     if @current_user.carts.exists?(product_id: product_id)
       render json: { errorMessage: "Product is already in your cart" }, status: :unprocessable_entity
       return
