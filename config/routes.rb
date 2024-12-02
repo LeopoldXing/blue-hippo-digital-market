@@ -20,4 +20,11 @@ Rails.application.routes.draw do
   post "/api/product", to: "products#create_product", as: :create_product
   delete "/api/product/:payload_id", to: "products#delete_product", as: :delete_product
   put "/api/product", to: "products#update_product", as: :update_product
+
+  # route
+  get "/api/cart", to: "cart#get_cart", as: :get_cart
+  post "/api/cart/:product_id", to: "cart#create", as: :create_cart_item
+  delete "/api/cart/:product_id", to: "cart#destroy", as: :destroy_cart_item
+  delete "/api/cart/clear", to: "cart#clear", as: :clear_cart
+
 end
