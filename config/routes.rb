@@ -27,4 +27,7 @@ Rails.application.routes.draw do
   delete "/api/cart/:product_id", to: "cart#destroy", as: :destroy_cart_item
   delete "/api/cart/clear", to: "cart#clear", as: :clear_cart
 
+  # order
+  get "/api/order/tax", to: "orders#get_tax", as: :get_tax
+
 end
