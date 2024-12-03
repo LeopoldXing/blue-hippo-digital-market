@@ -101,9 +101,26 @@ class UsersController < ApplicationController
 
       # merge_cart_items(user, product_id_list)
 
+      # query tax information
+      province_code = user.province
+      tax_info = CanadaSalesTax.find_by(province_code: province_code)
+      tax_type = tax_info ? tax_info.tax_type.to_s.downcase : ""
+      tax_rate = 0
+
+      case tax_type
+      when "hst"
+        tax_rate = tax_info ? tax_info.hst_rate * 0.01 : 0.01
+      when "gst"
+        tax_rate = tax_info ? tax_info.gst_rate : 0.01
+      when "gst+pst"
+        tax_rate = tax_info ? ((tax_info.gst_rate || 0) + (tax_info.pst_rate || 0)) * 0.01 : 0.01
+      end
+
       render json: {
         accessToken: access_token,
-        productList: product_id_list
+        productList: product_id_list,
+        taxType: tax_type,
+        taxRate: tax_rate
       }, status: :ok
     else
       render json: {
