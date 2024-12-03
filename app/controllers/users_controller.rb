@@ -16,7 +16,7 @@ class UsersController < ApplicationController
         updatedAt: @current_user.updated_at
       }, status: :ok
     else
-      render json: { error: "User not authenticated" }, status: :unauthorized
+      render json: { apiPath: "/api/user", errorCode: "UNAUTHORIZED", errorMessage: "Invalid Token, please sign in.", errorTime: [] }, status: :unauthorized
     end
   end
 

@@ -25,55 +25,129 @@ class ProductsController < ApplicationController
       page_size: page_size
     )
 
+    product_fields = [
+      :id,
+      :payload_id,
+      :name,
+      :description,
+      :price,
+      :price_id,
+      :stripe_id,
+      :category,
+      :product_file_url,
+      :approved_for_sale,
+      :created_at,
+      :updated_at,
+      :created_by,
+      :updated_by
+    ]
+
+    product_image_fields = [
+      :id,
+      :payload_id,
+      :url,
+      :filename,
+      :filesize,
+      :width,
+      :height,
+      :mime_type,
+      :file_type,
+      :created_at,
+      :updated_at,
+      :created_by,
+      :updated_by
+    ]
+
+    products_json = @products.as_json(
+      only: product_fields,
+      include: {
+        product_images: {
+          only: product_image_fields
+        }
+      }
+    )
+
+    products_json = products_json.map do |product|
+      product.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
+      if product['productImages']
+        product['productImages'].each do |image|
+          image.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
+        end
+      end
+      product
+    end
+
     render json: {
-      results: @products.as_json(include: { product_images: { only: [:url, :file_type] } }),
-      result_count: @products.total_count,
-      size: @products.limit_value,
+      results: products_json,
+      resultCount: @products.total_count,
+      totalPage: @products.total_pages,
       current: @products.current_page,
-      total_page: @products.total_pages
+      size: @products.limit_value
     }
   end
 
   def get_product
-    # Get product ID from request parameters
     product_id = params[:id]
 
-    # Query database for the product, including associated product images
     product = Product.includes(:product_images).find_by(id: product_id)
 
-    # Return 404 error if the product is not found
     if product.nil?
       render json: { error: "Product not found" }, status: :not_found
       return
     end
 
-    # Map product data into the expected JSON structure
-    product_data = {
-      id: product.id,
-      payloadId: product.payload_id,
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      priceId: product.price_id,
-      stripeId: product.stripe_id,
-      category: product.category,
-      productFileUrl: product.product_file_url,
-      productImages: product.product_images.map do |image|
-        {
-          payloadId: image.payload_id,
-          url: image.url,
-          filename: image.filename,
-          filesize: image.filesize,
-          width: image.width,
-          height: image.height,
-          mimeType: image.mime_type,
-          fileType: image.file_type
-        }
-      end
-    }
+    product_fields = [
+      :id,
+      :payload_id,
+      :name,
+      :description,
+      :price,
+      :price_id,
+      :stripe_id,
+      :category,
+      :product_file_url,
+      :approved_for_sale,
+      :created_at,
+      :updated_at,
+      :created_by,
+      :updated_by
+    ]
 
-    # Respond with the product data in JSON format
-    render json: product_data, status: :ok
+    product_image_fields = [
+      :id,
+      :payload_id,
+      :url,
+      :filename,
+      :filesize,
+      :width,
+      :height,
+      :mime_type,
+      :file_type,
+      :created_at,
+      :updated_at,
+      :created_by,
+      :updated_by
+    ]
+
+    product_json = product.as_json(
+      product: {
+        only: product_fields,
+        include: {
+          product_images: {
+            only: product_image_fields
+          }
+        }
+      }
+    )
+
+    product_json.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
+    if product_json['productImages']
+      product_json['productImages'].each do |image|
+        image.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
+      end
+    end
+
+    render json: product_json, status: :ok
   end
 
   # POST /api/product
