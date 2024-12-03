@@ -99,7 +99,61 @@ class UsersController < ApplicationController
       redis.set("user:access_token:#{access_token}", user.id)
       redis.set("user:id:#{user.id}", access_token)
 
-      # merge_cart_items(user, product_id_list)
+      # query user's cart items
+      cart_items = Cart.where(user_id: user.id).includes(product: :product_images)
+      products = cart_items.map(&:product)
+
+      product_fields = [
+        :id,
+        :payload_id,
+        :name,
+        :description,
+        :price,
+        :price_id,
+        :stripe_id,
+        :category,
+        :product_file_url,
+        :approved_for_sale,
+        :created_at,
+        :updated_at,
+        :created_by,
+        :updated_by
+      ]
+
+      product_image_fields = [
+        :id,
+        :payload_id,
+        :url,
+        :filename,
+        :filesize,
+        :width,
+        :height,
+        :mime_type,
+        :file_type,
+        :created_at,
+        :updated_at,
+        :created_by,
+        :updated_by
+      ]
+
+      product_list = products.map do |product|
+        product_json = product.as_json(
+          only: product_fields,
+          include: {
+            product_images: {
+              only: product_image_fields
+            }
+          }
+        )
+        product_json.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
+        if product_json['productImages']
+          product_json['productImages'].each do |image|
+            image.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
+          end
+        end
+
+        product_json
+      end
 
       # query tax information
       province_code = user.province
@@ -118,7 +172,7 @@ class UsersController < ApplicationController
 
       render json: {
         accessToken: access_token,
-        productList: product_id_list,
+        productList: product_list,
         taxType: tax_type,
         taxRate: tax_rate
       }, status: :ok
