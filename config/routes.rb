@@ -29,5 +29,5 @@ Rails.application.routes.draw do
 
   # order
   post "/api/stripe/payment/checkout-session", to: "orders#create_checkout_session", as: :create_checkout_session
-
+  get "/api/stripe/order/:order_id", to: "orders#get_order", as: :get_order
 end

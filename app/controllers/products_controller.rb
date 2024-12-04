@@ -69,8 +69,8 @@ class ProductsController < ApplicationController
 
     products_json = products_json.map do |product|
       product.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
-      if product['productImages']
-        product['productImages'].each do |image|
+      if product["productImages"]
+        product["productImages"].each do |image|
           image.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
         end
       end
@@ -89,12 +89,16 @@ class ProductsController < ApplicationController
   def get_product
     product_id = params[:id]
 
-    product = Product.includes(:product_images).find_by(id: product_id)
+    # Fetch the product without including images
+    product = Product.find_by(id: product_id)
 
     if product.nil?
       render json: { error: "Product not found" }, status: :not_found
       return
     end
+
+    # Filter product images where file_type == 'tablet'
+    tablet_images = product.product_images.where(file_type: "tablet")
 
     product_fields = [
       :id,
@@ -129,20 +133,16 @@ class ProductsController < ApplicationController
       :updated_by
     ]
 
-    product_json = product.as_json(
-      product: {
-        only: product_fields,
-        include: {
-          product_images: {
-            only: product_image_fields
-          }
-        }
-      }
-    )
+    # Build the product JSON without images
+    product_json = product.as_json(only: product_fields)
 
+    # Add the filtered images to the product JSON
+    product_json["product_images"] = tablet_images.as_json(only: product_image_fields)
+
+    # Convert keys to camelCase
     product_json.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
-    if product_json['productImages']
-      product_json['productImages'].each do |image|
+    if product_json["productImages"]
+      product_json["productImages"].each do |image|
         image.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
       end
     end
@@ -179,15 +179,15 @@ class ProductsController < ApplicationController
     product_params_snake_case = product_params.to_h.deep_transform_keys { |key| key.to_s.underscore }
 
     # Rename 'product_images' key to 'product_images_attributes' for nested attributes
-    if product_params_snake_case['product_images']
-      product_params_snake_case['product_images_attributes'] = product_params_snake_case.delete('product_images')
+    if product_params_snake_case["product_images"]
+      product_params_snake_case["product_images_attributes"] = product_params_snake_case.delete("product_images")
     end
 
     # Set 'created_by' and 'updated_by' for each product_image
-    if product_params_snake_case['product_images_attributes']
-      product_params_snake_case['product_images_attributes'].each do |image_params|
-        image_params['created_by'] = @current_user.id.to_s
-        image_params['updated_by'] = @current_user.id.to_s
+    if product_params_snake_case["product_images_attributes"]
+      product_params_snake_case["product_images_attributes"].each do |image_params|
+        image_params["created_by"] = @current_user.id.to_s
+        image_params["updated_by"] = @current_user.id.to_s
       end
     end
 
@@ -215,7 +215,7 @@ class ProductsController < ApplicationController
           stripe_price = Stripe::Price.create({
                                                 product: stripe_product.id,
                                                 unit_amount: (product.price * 100).to_i, # Convert to cents
-                                                currency: 'cad'
+                                                currency: "cad"
                                               })
 
           # Update product with stripe_id and price_id
@@ -285,12 +285,12 @@ class ProductsController < ApplicationController
     product_params_snake_case = product_params.to_h.deep_transform_keys { |key| key.to_s.underscore }
 
     # Rename 'product_images' key to 'product_images_attributes' for nested attributes
-    if product_params_snake_case['product_images']
-      product_params_snake_case['product_images_attributes'] = product_params_snake_case.delete('product_images')
+    if product_params_snake_case["product_images"]
+      product_params_snake_case["product_images_attributes"] = product_params_snake_case.delete("product_images")
     end
 
     # Find the existing product
-    product = Product.find_by(payload_id: product_params_snake_case['payload_id'])
+    product = Product.find_by(payload_id: product_params_snake_case["payload_id"])
 
     # Check if product exists
     if product.nil?
@@ -304,11 +304,11 @@ class ProductsController < ApplicationController
       product.product_images.destroy_all
 
       # Remove 'id's from images attributes and set 'created_by' and 'updated_by'
-      if product_params_snake_case['product_images_attributes']
-        product_params_snake_case['product_images_attributes'].each do |image_params|
-          image_params.delete('id') # Remove 'id' to create new images
-          image_params['created_by'] = @current_user.id.to_s
-          image_params['updated_by'] = @current_user.id.to_s
+      if product_params_snake_case["product_images_attributes"]
+        product_params_snake_case["product_images_attributes"].each do |image_params|
+          image_params.delete("id") # Remove 'id' to create new images
+          image_params["created_by"] = @current_user.id.to_s
+          image_params["updated_by"] = @current_user.id.to_s
         end
       end
 

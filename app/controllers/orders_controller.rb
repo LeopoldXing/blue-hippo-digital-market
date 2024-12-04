@@ -1,6 +1,6 @@
 class OrdersController < ApplicationController
   include Authentication
-  before_action :authenticate_user
+  before_action :authenticate_user, except: [:get_order]
 
   def create_checkout_session
     payload_order_id = params[:payloadOrderId]
@@ -90,9 +90,9 @@ class OrdersController < ApplicationController
     if tax_amount_cents > 0
       line_items.push({
                         price_data: {
-                          currency: 'cad',
+                          currency: "cad",
                           product_data: {
-                            name: 'Tax'
+                            name: "Tax"
                           },
                           unit_amount: tax_amount_cents
                         },
@@ -135,5 +135,114 @@ class OrdersController < ApplicationController
 
     # Step 6: return Checkout Session URL
     render plain: session.url, status: :ok
+  end
+
+  def get_order
+    order_id = params[:order_id]
+
+    # Include associated models to prevent N+1 queries
+    order = Order.includes(products: :product_images, user: :products).find_by(id: order_id)
+
+    if order.nil?
+      render json: { errorMessage: "Order not found" }, status: :not_found
+      return
+    end
+
+    # Define the fields to include for order
+    order_fields = [
+      :id,
+      :payload_id,
+      :created_at,
+      :updated_at,
+      :created_by,
+      :updated_by
+    ]
+
+    # Define the fields to include for user
+    user_fields = [
+      :id,
+      :created_at,
+      :updated_at,
+      :created_by,
+      :updated_by,
+      :payload_id,
+      :username,
+      :email,
+      :password_hash,
+      :salt,
+      :role,
+      :verified,
+      :locked,
+      :lock_until
+    ]
+
+    # Define the fields to include for product
+    product_fields = [
+      :id,
+      :created_at,
+      :updated_at,
+      :created_by,
+      :updated_by,
+      :payload_id,
+      :name,
+      :description,
+      :price,
+      :price_id,
+      :stripe_id,
+      :category,
+      :product_file_url,
+      :approved_for_sale
+    ]
+
+    # Define the fields to include for product images
+    product_image_fields = [
+      :id,
+      :created_at,
+      :updated_at,
+      :created_by,
+      :updated_by,
+      :payload_id,
+      :url,
+      :filename,
+      :filesize,
+      :width,
+      :height,
+      :mime_type,
+      :file_type
+    ]
+
+    # Build the JSON response
+    order_json = order.as_json(
+      only: order_fields,
+      include: {
+        user: {
+          only: user_fields,
+          include: {
+            products: {
+              only: [] # Assuming user's products are not needed, or specify fields if needed
+            }
+          }
+        },
+        products: {
+          only: product_fields,
+          include: {
+            product_images: {
+              only: product_image_fields
+            }
+          }
+        }
+      }
+    )
+
+    # Convert keys to camelCase recursively
+    order_json.deep_transform_keys! { |key| key.to_s.camelize(:lower) }
+
+    # Add 'isPaid' field
+    order_json["isPaid"] = true
+
+    # delete cart item
+    Cart.delete_by(user_id: order.user_id)
+
+    render json: order_json, status: :ok
   end
 end
