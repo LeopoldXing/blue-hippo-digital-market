@@ -28,6 +28,6 @@ Rails.application.routes.draw do
   delete "/api/cart/clear", to: "cart#clear", as: :clear_cart
 
   # order
-  get "/api/order/tax", to: "orders#get_tax", as: :get_tax
+  post "/api/stripe/payment/checkout-session", to: "orders#create_checkout_session", as: :create_checkout_session
 
 end

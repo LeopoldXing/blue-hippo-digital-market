@@ -158,8 +158,6 @@ class ProductsController < ApplicationController
       :name,
       :description,
       :price,
-      :priceId,
-      :stripeId,
       :category,
       :approvedForSale,
       :productFileUrl,
@@ -197,17 +195,50 @@ class ProductsController < ApplicationController
     product.created_by = @current_user.id.to_s
     product.updated_by = @current_user.id.to_s
 
-    # Save the product to the database
-    if product.save
-      render json: product.as_json(include: :product_images), status: :created
-    else
-      Rails.logger.debug "Product save failed: #{product.errors.full_messages}"
-      product.product_images.each do |image|
-        if image.errors.any?
-          Rails.logger.debug "ProductImage errors: #{image.errors.full_messages}"
+    # Begin transaction
+    Product.transaction do
+      # Save the product to the database (temporarily without stripe_id and price_id)
+      if product.save
+        # Create Stripe product and price
+        begin
+          # Initialize Stripe API key
+          Stripe.api_key = Rails.configuration.stripe[:secret_key]
+
+          # Create Stripe product
+          stripe_product = Stripe::Product.create({
+                                                    name: product.name
+                                                  })
+
+          # Create Stripe price
+          stripe_price = Stripe::Price.create({
+                                                product: stripe_product.id,
+                                                unit_amount: (product.price * 100).to_i, # Convert to cents
+                                                currency: 'cad'
+                                              })
+
+          # Update product with stripe_id and price_id
+          product.update!(
+            stripe_id: stripe_product.id,
+            price_id: stripe_price.id
+          )
+
+          # Return the product with associated images
+          render json: product.as_json(include: :product_images), status: :created
+        rescue Stripe::StripeError => e
+          Rails.logger.error "Stripe error: #{e.message}"
+          # Rollback transaction
+          raise ActiveRecord::Rollback
+          render json: { errorMessage: "Failed to create product on Stripe: #{e.message}" }, status: :unprocessable_entity
         end
+      else
+        Rails.logger.debug "Product save failed: #{product.errors.full_messages}"
+        product.product_images.each do |image|
+          if image.errors.any?
+            Rails.logger.debug "ProductImage errors: #{image.errors.full_messages}"
+          end
+        end
+        render json: { errorMessage: product.errors.full_messages.join(", ") }, status: :unprocessable_entity
       end
-      render json: { errorMessage: product.errors.full_messages.join(", ") }, status: :unprocessable_entity
     end
   end
 

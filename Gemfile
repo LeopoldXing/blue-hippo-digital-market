@@ -8,6 +8,8 @@ gem 'kaminari'
 gem 'rack-cors'
 # redis
 gem "redis"
+# stripe
+gem "stripe"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 7.2.1", ">= 7.2.1.2"
