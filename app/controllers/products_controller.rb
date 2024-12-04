@@ -158,6 +158,8 @@ class ProductsController < ApplicationController
       :name,
       :description,
       :price,
+      :priceId,
+      :stripeId,
       :category,
       :approvedForSale,
       :productFileUrl,

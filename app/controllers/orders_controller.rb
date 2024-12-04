@@ -19,13 +19,6 @@ class OrdersController < ApplicationController
     # 获取当前用户
     user = @current_user
 
-    # Step 1: 创建订单
-    order = Order.new(
-      payload_id: payload_order_id,
-      user: user,
-      is_paid: false
-    )
-
     # 关联产品到订单
     products = Product.where(id: product_ids)
 
@@ -36,6 +29,46 @@ class OrdersController < ApplicationController
       return
     end
 
+    cart_total = 0
+    products.each do |product|
+      cart_total += product.price
+    end
+
+    # query tax information
+    province_code = user.province
+    tax_info = CanadaSalesTax.find_by(province_code: province_code)
+    tax_type = tax_info ? tax_info.tax_type.to_s.downcase : ""
+    hst = 0
+    gst = 0
+    pst = 0
+
+    case tax_type
+    when "hst"
+      hst_rate = tax_info ? tax_info.hst_rate * 0.01 : 0.01
+      hst = hst_rate * cart_total
+    when "gst"
+      gst_rate = tax_info ? tax_info.gst_rate : 0.01
+      gst = gst_rate * cart_total
+    when "gst+pst"
+      pst_rate = tax_info ? tax_info.pst_rate * 0.01 : 0.01
+      gst_rate = tax_info ? tax_info.gst_rate : 0.01
+      pst = pst_rate * cart_total
+      gst = gst_rate * cart_total
+    end
+
+    # Step 1: 创建订单
+    order = Order.new(
+      payload_id: payload_order_id,
+      user: user,
+      is_paid: false,
+      tax_type: tax_type,
+      hst: hst,
+      gst: gst,
+      pst: pst,
+      created_by: user.id,
+      updated_by: user.id
+    )
+
     order.products = products
 
     # 保存订单
@@ -43,6 +76,7 @@ class OrdersController < ApplicationController
       # 订单保存成功
     else
       # 处理错误
+      Rails.logger.error "Order save failed: #{order.errors.full_messages}"
       render json: { errorMessage: order.errors.full_messages.join(", ") }, status: :unprocessable_entity
       return
     end

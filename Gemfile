@@ -1,15 +1,17 @@
 source "https://rubygems.org"
 
 # encrypt
-gem 'bcrypt', '~> 3.1.7'
+gem "bcrypt", "~> 3.1.7"
 # pagination
-gem 'kaminari'
+gem "kaminari"
 # cors
-gem 'rack-cors'
+gem "rack-cors"
 # redis
 gem "redis"
 # stripe
 gem "stripe"
+# env
+gem "dotenv-rails", groups: [:development, :test]
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 7.2.1", ">= 7.2.1.2"
