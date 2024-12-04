@@ -24,42 +24,42 @@ class Product < ApplicationRecord
     if params[:keyword].present?
       keyword = params[:keyword].downcase.strip
       products = products.where(
-        'LOWER(name) LIKE :keyword OR LOWER(description) LIKE :keyword OR LOWER(category) LIKE :keyword',
+        "LOWER(name) LIKE :keyword OR LOWER(description) LIKE :keyword OR LOWER(category) LIKE :keyword",
         keyword: "%#{keyword}%"
       )
     end
 
     # 2. Category filter
-    if params[:category].present? && params[:category].strip.downcase != 'all'
+    if params[:category].present? && params[:category].strip.downcase != "all"
       category_value = params[:category].downcase
-      products = products.where('category = :category', { category: category_value })
+      products = products.where("category = :category", { category: category_value })
     end
 
     # 3. Price range filter
     if params[:top_price].to_f > 0
-      products = products.where('price <= :top_price', { top_price: params[:top_price].to_f })
+      products = products.where("price <= :top_price", { top_price: params[:top_price].to_f })
     end
 
     if params[:bottom_price].to_f > 0
-      products = products.where('price >= :bottom_price', { bottom_price: params[:bottom_price].to_f })
+      products = products.where("price >= :bottom_price", { bottom_price: params[:bottom_price].to_f })
     end
 
     # 4. Sorting
-    sorting_direction = %w[ASC DESC].include?(params[:sorting_direction]) ? params[:sorting_direction] : 'DESC'
+    sorting_direction = %w[ASC DESC].include?(params[:sorting_direction]) ? params[:sorting_direction] : "DESC"
     case params[:sorting_strategy]
-    when 'CREATED_TIMESTAMP'
+    when "CREATED_TIMESTAMP"
       products = products.order("created_at #{sorting_direction}")
-    when 'PRICE'
+    when "PRICE"
       products = products.order("price #{sorting_direction}")
-    when 'POPULARITY'
-      products = products.order('RANDOM()')
+    when "POPULARITY"
+      products = products.order("RANDOM()")
     else
       products = products.order("created_at DESC")
     end
 
     # 5. Pagination
     page = params[:current].to_i > 0 ? params[:current].to_i : 1
-    per_page = params[:size].to_i > 0 ? params[:size].to_i : 10
+    per_page = params[:size].to_i > 0 ? params[:size].to_i : 8
     products.page(page).per(per_page)
   end
 

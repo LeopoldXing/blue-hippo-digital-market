@@ -12,7 +12,7 @@ class ProductsController < ApplicationController
     sorting_strategy = params[:sortingStrategy]&.upcase
     sorting_direction = params[:sortingDirection]&.upcase
     current_page = params[:current].to_i > 0 ? params[:current].to_i : 1
-    page_size = params[:size].to_i > 0 ? params[:size].to_i : 10
+    page_size = params[:size].to_i > 0 ? params[:size].to_i : 8
 
     @products = Product.search_products(
       keyword: keyword,
@@ -21,8 +21,8 @@ class ProductsController < ApplicationController
       bottom_price: bottom_price,
       sorting_strategy: sorting_strategy,
       sorting_direction: sorting_direction,
-      current_page: current_page,
-      page_size: page_size
+      current: current_page,
+      size: page_size
     )
 
     product_fields = [
