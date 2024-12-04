@@ -165,7 +165,7 @@ class UsersController < ApplicationController
       when "hst"
         tax_rate = tax_info ? tax_info.hst_rate * 0.01 : 0.01
       when "gst"
-        tax_rate = tax_info ? tax_info.gst_rate : 0.01
+        tax_rate = tax_info ? tax_info.gst_rate * 0.01 : 0.01
       when "gst+pst"
         tax_rate = tax_info ? ((tax_info.gst_rate || 0) + (tax_info.pst_rate || 0)) * 0.01 : 0.01
       end

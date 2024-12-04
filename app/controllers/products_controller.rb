@@ -252,11 +252,6 @@ class ProductsController < ApplicationController
 
     product = Product.find_by(payload_id: payload_id)
 
-    if product.nil?
-      render json: { errorMessage: "Product not found" }, status: :not_found
-      return
-    end
-
     product.destroy
     render json: { message: "Product deleted successfully" }, status: :no_content
   end
